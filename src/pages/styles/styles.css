@@ -1,0 +1,30 @@
+
+.fc-timegrid-slot {
+  line-height: 80px;
+}
+.eventContainer {
+  width: 102%;
+  overflow: hidden;
+  height: 80px;
+}
+.fc-prev-button {
+  background: url('./arrowPrev.svg') no-repeat center center;
+  background-size: 100% 100%;
+  width: 35px; /* adjust size as needed */
+  height: 38.5px; /* adjust size as needed */
+  border: none;
+}
+
+.fc-next-button {
+  background: url('./arrowNext.svg') no-repeat center center;
+  background-size: 100% 100%;
+  width: 35px; /* adjust size as needed */
+  height: 38.5px; /* adjust size as needed */
+  border: none;
+}
+.fc-icon-chevron-left::before {
+  content: "";
+}
+.fc-icon-chevron-right::before {
+  content: "";
+}
