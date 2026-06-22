@@ -11,6 +11,43 @@ import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
 import { Token } from "@/types";
 
+function sanitizeEnvUrl(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  let trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const isWrappedInDoubleQuotes =
+    trimmed.startsWith('"') && trimmed.endsWith('"') && trimmed.length >= 2;
+  const isWrappedInSingleQuotes =
+    trimmed.startsWith("'") && trimmed.endsWith("'") && trimmed.length >= 2;
+
+  if (isWrappedInDoubleQuotes || isWrappedInSingleQuotes) {
+    trimmed = trimmed.slice(1, -1).trim();
+  }
+
+  if (!trimmed || trimmed === "undefined" || trimmed === "null") return undefined;
+
+  const looksLikeHostWithoutProtocol =
+    !trimmed.includes("://") && !trimmed.startsWith("/") && /^[\w.-]+:\d+/.test(trimmed);
+  if (looksLikeHostWithoutProtocol) {
+    trimmed = `http://${trimmed}`;
+  }
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.hostname === "0.0.0.0") {
+        parsed.hostname = "127.0.0.1";
+        trimmed = parsed.toString().replace(/\/$/, "");
+      }
+    } catch {
+      return undefined;
+    }
+  }
+
+  return trimmed;
+}
+
 let token: Token = {
   accessToken: "",
   expiresIn: "",
@@ -39,8 +76,33 @@ const handleUnauthorized = () => {
 };
 
 // HTTP Link
+const defaultGraphQlUrl = (() => {
+  if (typeof window !== "undefined") {
+    const protocol = window.location?.protocol;
+    const hostname = window.location?.hostname;
+    if (
+      (protocol === "http:" || protocol === "https:") &&
+      typeof hostname === "string" &&
+      hostname.length > 0
+    ) {
+      return `${protocol}//${hostname}:3000/graphql`;
+    }
+  }
+  return "http://localhost:3000/graphql";
+})();
+
+const apiUrlFallback = sanitizeEnvUrl(import.meta.env?.VITE_API_URL);
+const apiUrlLooksLikeGraphQl =
+  typeof apiUrlFallback === "string" && /\/graphql\/?$/.test(apiUrlFallback);
+
+const graphQlUrl =
+  sanitizeEnvUrl(import.meta.env?.VITE_GRAPHQL_URL) ||
+  sanitizeEnvUrl(import.meta.env?.VITE_GRAPHQL_URI) ||
+  (apiUrlLooksLikeGraphQl ? apiUrlFallback : undefined) ||
+  defaultGraphQlUrl;
+
 const httpLink = new HttpLink({
-  uri: import.meta.env.VITE_GRAPHQL_URL || "http://localhost:3000/graphql",
+  uri: graphQlUrl,
 });
 
 // Auth Link
@@ -67,7 +129,7 @@ const errorLink = new ErrorLink(({ error, operation }) => {
   // Detect network errors
   if (message.includes("Failed to fetch") || message.includes("Network")) {
     console.error(
-      `[Network Error] Cannot reach GraphQL endpoint: ${import.meta.env.VITE_GRAPHQL_URL || "http://localhost:3000/graphql"}`,
+      `[Network Error] Cannot reach GraphQL endpoint: ${graphQlUrl}`,
     );
   }
 

@@ -44,8 +44,8 @@ export default function CalendarPage() {
     useState<EventDropArg | null>(null);
   const [currentView, setCurrentView] = useState("timeGridWeek");
 
-  const [slotMinTime, setSlotMinTime] = useState("");
-  const [slotMaxTime, setSlotMaxTime] = useState("");
+  const [slotMinTime, setSlotMinTime] = useState("08:15:00");
+  const [slotMaxTime, setSlotMaxTime] = useState("18:00:00");
   const [slotTime, setSlotTime] = useState("00:45:00");
 
   const { data, refetch, loading } = useQuery(FETCH_APPOINTMENTS, {
@@ -140,8 +140,9 @@ export default function CalendarPage() {
 
   useEffect(() => {
     if (user) {
-      setSlotMinTime(user.startWork.split(" ")[1]);
-      setSlotMaxTime(user.endWork.split(" ")[1]);
+      console.log('user', user, user.startWork, user.endWork)
+      setSlotMinTime(user.startWork.split(" ")[1].toString());
+      setSlotMaxTime(user.endWork.split(" ")[1].toString());
       setSlotTime(user.slotDuration || "00:45:00");
     }
   }, [user]);
@@ -272,7 +273,7 @@ export default function CalendarPage() {
                 ref={calendarRef} // 5. Attach the ref here!
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView={currentView}
-                timeZone="UTC"
+                timeZone="local"
                 headerToolbar={false} // Hide default header since we built a custom one
                 eventClassNames="event-container"
                 selectable={true}

@@ -1,7 +1,5 @@
 import * as React from "react";
 import {
-  Sun,
-  Moon,
   Clock,
   Globe,
   CreditCard,
@@ -11,24 +9,25 @@ import {
   User,
   Building2,
   Mail,
-  Phone,
 } from "lucide-react";
 import { useMutation } from "@apollo/client/react";
-import { updateWork, updateLang } from "@/services/auth.service";
-import { AuthContext } from "@/providers/AuthProvider";
+import { updateWork } from "@/services/auth.service";
+import { useAuthStore } from "@/store/authStore";
 
 export default function SettingsPage(): React.JSX.Element {
-  const { setUser, user } = React.useContext(AuthContext);
-
+  const user = useAuthStore((state) => state.user);
   const [call, { loading }] = useMutation(updateWork, {
     onCompleted: (res: any) => {
       if (user) {
-        setUser({
-          ...user,
-          endWork: res.updateWork.endWork,
-          startWork: res.updateWork.startWork,
-          slotDuration: res.updateWork.slotDuration,
-        });
+        console.log('res', res)
+        useAuthStore.setState({
+          user: {
+            ...user,
+            endWork: res.updateWork.endWork,
+            startWork: res.updateWork.startWork,
+            slotDuration: res.updateWork.slotDuration,
+          }
+        })
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
       }
@@ -73,7 +72,8 @@ export default function SettingsPage(): React.JSX.Element {
 
     const endDate = new Date();
     endDate.setHours(endHours, endMinutes, 0, 0);
-
+    console.log('startDate', startDate.getTime())
+    console.log('endDate', endDate.getTime())
     call({
       variables: {
         startWork: startDate,
