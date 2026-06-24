@@ -1,16 +1,14 @@
 {
-  "name": "my-office-app",
+  "name": "the-office-app",
   "version": "1.0.0",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder",
-    "preview": "vite preview",
-    "import-certificate": "bash ./import_certificate.sh",
-    "publish": "electron-builder --mac -p always",
+    "build": "tsc && vite build",
+    "dist": "electron-builder",
     "build:win": "npm run build && electron-builder --win",
-    "build:mac": "vite build && electron-builder --mac",
-    "build:linux": "vite build && electron-builder --linux",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux",
     "test": "jest",
     "test:watch": "jest --watch"
   },
@@ -61,10 +59,9 @@
   "author": "mohamed Al moez ben jemaa <moezbj.93@gmail.com>",
   "license": "ISC",
   "build": {
-    "appId": "office-schedule-builder",
+    "appId": "the-office-builder",
     "asar": true,
-    "extends": null,
-    "productName": "office-schedule",
+    "productName": "the-office",
     "directories": {
       "output": "release/${version}"
     },
@@ -73,8 +70,8 @@
       "releaseType": "release"
     },
     "files": [
-      "dist",
-      "dist-electron"
+      "dist/**/*",
+      "dist-electron/**/*"
     ],
     "mac": {
       "identity": null,
@@ -93,11 +90,7 @@
           ]
         }
       ],
-      "artifactName": "${productName}-Windows-${version}-Setup.${ext}",
-      "signingHashAlgorithms": [
-        "sha256"
-      ]
-
+      "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,

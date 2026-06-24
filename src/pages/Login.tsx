@@ -2,7 +2,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { signin } from "../services/auth.service";
+import { signin, signup } from "../services/auth.service";
+// import { signup } from "../services/auth.service"; // Uncomment when you have your signup mutation
 import useAuth from "@/hooks/useAuth";
 import { useState } from "react";
 import {
@@ -14,32 +15,70 @@ import {
   AlertCircle,
   Building2,
   Stethoscope,
+  User, // Added for First/Last name
 } from "lucide-react";
+
+// ==========================================
+// 1. Zod Validation Schemas
+// ==========================================
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, { message: "L'email est requis" })
+    .email({ message: "Veuillez entrer un email valide" }),
+  password: z.string().min(1, { message: "Le mot de passe est requis" }),
+  withResources: z.boolean(),
+});
+
+const registerSchema = z.object({
+  firstName: z.string().min(1, { message: "Le prénom est requis" }),
+  lastName: z.string().min(1, { message: "Le nom est requis" }),
+  email: z
+    .string()
+    .min(1, { message: "L'email est requis" })
+    .email({ message: "Veuillez entrer un email valide" }),
+  password: z.string().min(6, { message: "Le mot de passe doit contenir au moins 6 caractères" }),
+  taxRegistration: z.string().min(1, { message: "Le numéro d'inscription fiscale est requis" }),
+});
 
 export default function Login() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const formSchema = z.object({
-    email: z
-      .string()
-      .min(1, { message: "L'email est requis" })
-      .email({ message: "Veuillez entrer un email valide" }),
-    password: z.string().min(1, { message: "Le mot de passe est requis" }),
-    withResources: z.boolean(),
+  // ==========================================
+  // 2. Login Form Hook
+  // ==========================================
+  const {
+    register: registerLogin,
+    handleSubmit: handleLoginSubmit,
+    formState: { errors: loginErrors, isSubmitting: isLoginSubmitting },
+  } = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      withResources: false,
+    },
   });
 
+  // ==========================================
+  // 3. Register Form Hook
+  // ==========================================
   const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    register: registerSignup,
+    handleSubmit: handleRegisterSubmit,
+    formState: { errors: registerErrors, isSubmitting: isRegisterSubmitting },
+  } = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
-      email: "moezbj.93@gmail.com",
-      password: "Test123@",
-      withResources: false,
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      taxRegistration: "",
     },
   });
 
@@ -52,7 +91,16 @@ export default function Login() {
     },
   });
 
-  const onSubmit = (variables: {
+  const [RegisterCall, { loading: isRegisterLoading, error: registerError }] = useAuth({
+    mutation: signup,
+    options: {
+      onCompleted: () => {
+        setActiveTab("login"); // Switch to login after successful registration
+      },
+    },
+  });
+
+  const onLoginSubmit = (variables: {
     email: string;
     password: string;
     withResources: boolean;
@@ -62,21 +110,21 @@ export default function Login() {
     });
   };
 
+  const onRegisterSubmit = (data: z.infer<typeof registerSchema>) => {
+    // TODO: Call your signup mutation here
+    RegisterCall({ variables: data });
+  };
+
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Branding */}
+      {/* Left Side - Branding (Unchanged) */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 relative overflow-hidden">
-        {/* Decorative Blur Elements */}
         <div className="absolute inset-0">
           <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl" />
           <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-blue-400/20 rounded-full blur-2xl" />
         </div>
-
-        {/* Simplified Pattern Overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.1)_1px,transparent_0)] [background-size:20px_20px] opacity-30" />
-
-        {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
@@ -84,18 +132,14 @@ export default function Login() {
             </div>
             <span className="text-2xl font-bold text-white">My Office</span>
           </div>
-
           <h1 className="text-4xl xl:text-5xl font-bold text-white mb-6 leading-tight">
             Bienvenue dans votre
             <span className="block text-blue-200">Espace de Gestion</span>
           </h1>
-
           <p className="text-lg text-blue-100 mb-8 max-w-md">
-            Gérez vos rendez-vous, patients et facturation en un seul endroit. 
+            Gérez vos rendez-vous, patients et facturation en un seul endroit.
             Sécurisé, efficace et conçu pour les professionnels de santé.
           </p>
-
-          {/* Feature List */}
           <div className="space-y-4">
             {[
               { icon: Building2, text: "Gérez votre cabinet efficacement" },
@@ -110,16 +154,15 @@ export default function Login() {
               </div>
             ))}
           </div>
-
-          {/* Footer */}
           <div className="absolute bottom-8 left-12 text-white/60 text-sm">
             <p>© 2026 My Office. Tous droits réservés.</p>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-white">
+      {/* Right Side - Form */}
+      {/* Added overflow-y-auto to prevent cutting off the longer register form on small screens */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-white overflow-y-auto">
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
@@ -129,16 +172,44 @@ export default function Login() {
             <span className="text-xl font-bold text-slate-800">My Office</span>
           </div>
 
+          {/* Tabs Navigation */}
+          <div className="flex border-b border-slate-200">
+            <button
+              type="button"
+              onClick={() => setActiveTab("login")}
+              className={`flex-1 pb-3 text-sm font-medium text-center border-b-2 transition-colors ${activeTab === "login"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+                }`}
+            >
+              Connexion
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("register")}
+              className={`flex-1 pb-3 text-sm font-medium text-center border-b-2 transition-colors ${activeTab === "register"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+                }`}
+            >
+              Inscription
+            </button>
+          </div>
+
           {/* Header */}
           <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold text-slate-800">Connexion</h2>
+            <h2 className="text-3xl font-bold text-slate-800">
+              {activeTab === "login" ? "Connexion" : "Créer un compte"}
+            </h2>
             <p className="text-slate-500 mt-2">
-              Entrez vos identifiants pour accéder à votre compte
+              {activeTab === "login"
+                ? "Entrez vos identifiants pour accéder à votre compte"
+                : "Remplissez les informations ci-dessous pour créer votre compte"}
             </p>
           </div>
 
           {/* Error Alert */}
-          {error && (
+          {error && activeTab === "login" && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div>
@@ -150,109 +221,239 @@ export default function Login() {
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Email Field */}
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                Adresse email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  {...register("email")}
-                  className={`w-full pl-12 pr-4 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
-                    errors.email || error
-                      ? "border-red-300 focus:ring-red-500/20 focus:border-red-500"
-                      : "border-slate-300"
-                  }`}
-                  placeholder="vous@exemple.com"
-                />
+          {/* ========================================== */}
+          {/* LOGIN FORM                                 */}
+          {/* ========================================== */}
+          {activeTab === "login" && (
+            <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-sm font-medium text-slate-700">Adresse email</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    {...registerLogin("email")}
+                    className={`w-full pl-12 pr-4 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${loginErrors.email || error ? "border-red-300 focus:ring-red-500/20 focus:border-red-500" : "border-slate-300"
+                      }`}
+                    placeholder="vous@exemple.com"
+                  />
+                </div>
+                {loginErrors.email && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {loginErrors.email.message}
+                  </p>
+                )}
               </div>
-              {errors.email && (
-                <p className="text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
 
-            {/* Password Field */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-                  Mot de passe
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="password" className="block text-sm font-medium text-slate-700">Mot de passe</label>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/forgetPassword")}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Mot de passe oublié ?
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    {...registerLogin("password")}
+                    className={`w-full pl-12 pr-12 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${loginErrors.password || error ? "border-red-300 focus:ring-red-500/20 focus:border-red-500" : "border-slate-300"
+                      }`}
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {loginErrors.password && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {loginErrors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="remember-me" className="ml-3 text-sm text-slate-600 cursor-pointer select-none">
+                  Se souvenir de moi pendant 30 jours
                 </label>
-                <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  Mot de passe oublié ?
-                </a>
               </div>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  {...register("password")}
-                  className={`w-full pl-12 pr-12 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
-                    errors.password || error
-                      ? "border-red-300 focus:ring-red-500/20 focus:border-red-500"
-                      : "border-slate-300"
-                  }`}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+
+              <button
+                type="submit"
+                disabled={isLoginSubmitting || isLoading}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-400 disabled:to-indigo-400 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 disabled:shadow-none flex items-center justify-center gap-2"
+              >
+                {isLoginSubmitting || isLoading ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" />Connexion en cours...</>
+                ) : (
+                  "Se connecter"
+                )}
+              </button>
+            </form>
+          )}
+
+          {/* ========================================== */}
+          {/* REGISTER FORM                              */}
+          {/* ========================================== */}
+          {activeTab === "register" && (
+            <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-6">
+              {/* First & Last Name Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="firstName" className="block text-sm font-medium text-slate-700">Prénom</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      id="firstName"
+                      type="text"
+                      {...registerSignup("firstName")}
+                      className={`w-full pl-12 pr-4 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${registerErrors.firstName ? "border-red-300 focus:ring-red-500/20 focus:border-red-500" : "border-slate-300"
+                        }`}
+                      placeholder="John"
+                    />
+                  </div>
+                  {registerErrors.firstName && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {registerErrors.firstName.message}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="lastName" className="block text-sm font-medium text-slate-700">Nom</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      id="lastName"
+                      type="text"
+                      {...registerSignup("lastName")}
+                      className={`w-full pl-12 pr-4 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${registerErrors.lastName ? "border-red-300 focus:ring-red-500/20 focus:border-red-500" : "border-slate-300"
+                        }`}
+                      placeholder="Doe"
+                    />
+                  </div>
+                  {registerErrors.lastName && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {registerErrors.lastName.message}
+                    </p>
+                  )}
+                </div>
               </div>
-              {errors.password && (
-                <p className="text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
 
-            {/* Remember Me */}
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="remember-me" className="ml-3 text-sm text-slate-600 cursor-pointer select-none">
-                Se souvenir de moi pendant 30 jours
-              </label>
-            </div>
+              {/* Email */}
+              <div className="space-y-2">
+                <label htmlFor="reg-email" className="block text-sm font-medium text-slate-700">Adresse email</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    id="reg-email"
+                    type="email"
+                    {...registerSignup("email")}
+                    className={`w-full pl-12 pr-4 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${registerErrors.email ? "border-red-300 focus:ring-red-500/20 focus:border-red-500" : "border-slate-300"
+                      }`}
+                    placeholder="vous@exemple.com"
+                  />
+                </div>
+                {registerErrors.email && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {registerErrors.email.message}
+                  </p>
+                )}
+              </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSubmitting || isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-400 disabled:to-indigo-400 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 disabled:shadow-none flex items-center justify-center gap-2"
-            >
-              {isSubmitting || isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Connexion en cours...
-                </>
-              ) : (
-                "Se connecter"
-              )}
-            </button>
-          </form>
+              {/* Password */}
+              <div className="space-y-2">
+                <label htmlFor="reg-password" className="block text-sm font-medium text-slate-700">Mot de passe</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    id="reg-password"
+                    type={showRegisterPassword ? "text" : "password"}
+                    {...registerSignup("password")}
+                    className={`w-full pl-12 pr-12 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${registerErrors.password ? "border-red-300 focus:ring-red-500/20 focus:border-red-500" : "border-slate-300"
+                      }`}
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showRegisterPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {registerErrors.password && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {registerErrors.password.message}
+                  </p>
+                )}
+              </div>
 
-          {/* Divider */}
-          <div className="relative">
+              {/* Tax Registration */}
+              <div className="space-y-2">
+                <label htmlFor="taxRegistration" className="block text-sm font-medium text-slate-700">
+                  Numéro d'inscription fiscale (Patente)
+                </label>
+                <div className="relative">
+                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    id="taxRegistration"
+                    type="text"
+                    {...registerSignup("taxRegistration")}
+                    className={`w-full pl-12 pr-4 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${registerErrors.taxRegistration ? "border-red-300 focus:ring-red-500/20 focus:border-red-500" : "border-slate-300"
+                      }`}
+                    placeholder="Ex: 1234567/A/M/000"
+                  />
+                </div>
+                {registerErrors.taxRegistration && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {registerErrors.taxRegistration.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isRegisterSubmitting || isRegisterLoading} // Add isRegisterLoading here when you uncomment the mutation
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-400 disabled:to-indigo-400 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 disabled:shadow-none flex items-center justify-center gap-2"
+              >
+                {isRegisterSubmitting ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" />Inscription en cours...</>
+                ) : (
+                  "Créer mon compte"
+                )}
+              </button>
+            </form>
+          )}
+
+
+          {/*    <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200" />
             </div>
@@ -261,7 +462,7 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Social Login Buttons */}
+       
           <div className="grid grid-cols-2 gap-4">
             <button type="button" className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -278,14 +479,25 @@ export default function Login() {
               </svg>
               <span className="text-sm font-medium text-slate-700">Facebook</span>
             </button>
-          </div>
+          </div> */}
 
-          {/* Sign Up Link */}
+          {/* Footer Toggle Link */}
           <p className="text-center text-sm text-slate-500">
-            Vous n'avez pas de compte ?{" "}
-            <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-              Contacter l'administrateur
-            </a>
+            {activeTab === "login" ? (
+              <>
+                Vous n'avez pas de compte ?{" "}
+                <button type="button" onClick={() => setActiveTab("register")} className="text-blue-600 hover:text-blue-700 font-medium">
+                  Inscrivez-vous
+                </button>
+              </>
+            ) : (
+              <>
+                Vous avez déjà un compte ?{" "}
+                <button type="button" onClick={() => setActiveTab("login")} className="text-blue-600 hover:text-blue-700 font-medium">
+                  Connectez-vous
+                </button>
+              </>
+            )}
           </p>
         </div>
       </div>

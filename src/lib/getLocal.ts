@@ -1,10 +1,10 @@
-import i18n from "@/config/i18n";
-import { fr, enGB, ar } from "date-fns/locale";
+// import i18n from "@/config/i18n";
+// import { fr, enGB, ar } from "date-fns/locale";
 
 
 
 
-export const renderLocal = () => {
+/* export const renderLocal = () => {
   let res;
   switch (i18n.language) {
     case "en": {
@@ -25,3 +25,4 @@ export const renderLocal = () => {
   }
   return res;
 };
+ */

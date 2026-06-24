@@ -27,7 +27,7 @@ export default function BillsPage() {
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [appointmentData, setAppointmentData] = useState<any[]>([]);
 
-  const { handleSubmit, register, getValues, control, watch } = useForm<
+  const { handleSubmit, register, control } = useForm<
     z.infer<typeof formSchema>
   >({
     resolver: zodResolver(formSchema),
@@ -39,7 +39,7 @@ export default function BillsPage() {
   });
 
   // Watch patient value for real-time updates
-  const watchedPatient = watch("patient");
+  // const watchedPatient = watch("patient");
 
   const patientsList = useMemo(() => {
     if (!data) return null;
@@ -54,10 +54,10 @@ export default function BillsPage() {
   }, [lists]);
 
   // Find the selected patient based on the watched value
-  const getPatient = useMemo(() => {
+/*   const getPatient = useMemo(() => {
     if (!patientsList?.patients || !watchedPatient) return null;
     return patientsList.patients.find((p: any) => p.id === watchedPatient);
-  }, [patientsList, watchedPatient]);
+  }, [patientsList, watchedPatient]); */
 
   const onSubmit = async (variables: any): Promise<void> => {
     // Get the patient from the submitted form values (not from render-time getValues)

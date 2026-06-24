@@ -1,9 +1,9 @@
 import { CREATE_NOTE, FETCH_NOTES, UPDATE_NOTE } from "@/services/note";
 import { NoteType } from "@/types";
-import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
+import { useLazyQuery, useMutation } from "@apollo/client/react";
 import JoditEditor from "jodit-react";
 import parse from "html-react-parser";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Plus,
   Pencil,

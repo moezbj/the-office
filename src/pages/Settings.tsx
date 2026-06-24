@@ -19,7 +19,6 @@ export default function SettingsPage(): React.JSX.Element {
   const [call, { loading }] = useMutation(updateWork, {
     onCompleted: (res: any) => {
       if (user) {
-        console.log('res', res)
         useAuthStore.setState({
           user: {
             ...user,
@@ -72,8 +71,6 @@ export default function SettingsPage(): React.JSX.Element {
 
     const endDate = new Date();
     endDate.setHours(endHours, endMinutes, 0, 0);
-    console.log('startDate', startDate.getTime())
-    console.log('endDate', endDate.getTime())
     call({
       variables: {
         startWork: startDate,
@@ -328,7 +325,7 @@ export default function SettingsPage(): React.JSX.Element {
 
         {/* Footer */}
         <div className="text-center text-sm text-slate-400 py-4">
-          <p>© 2026 My Office • Version 1.0.0</p>
+          <p>© 2026 The Office • Version 1.0.0</p>
         </div>
       </div>
     </div>

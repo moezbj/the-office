@@ -10,7 +10,6 @@ import {
   ChevronRight,
   LayoutDashboard,
   Settings,
-  UserCircle,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -69,7 +68,7 @@ export default function Sidebar() {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  My Office
+                  The Office
                 </h1>
                 <p className="text-xs text-slate-500">Practice Management</p>
               </div>
@@ -161,7 +160,7 @@ export default function Sidebar() {
       {/* Footer */}
       {!isCollapsed && (
         <div className="p-4 text-center text-xs text-slate-400 border-t border-slate-100">
-          <p>© 2026 My Office</p>
+          <p>© 2026 The Office</p>
           <p className="mt-1">v1.0.0</p>
         </div>
       )}

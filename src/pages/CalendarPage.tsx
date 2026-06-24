@@ -140,13 +140,11 @@ export default function CalendarPage() {
 
   useEffect(() => {
     if (user) {
-      console.log('user', user, user.startWork, user.endWork)
       setSlotMinTime(user.startWork.split(" ")[1].toString());
       setSlotMaxTime(user.endWork.split(" ")[1].toString());
       setSlotTime(user.slotDuration || "00:45:00");
     }
   }, [user]);
-  console.log("slotMinTime", slotMinTime, "slotMaxTime", slotMaxTime);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 p-6">

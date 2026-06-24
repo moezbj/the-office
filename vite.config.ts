@@ -11,11 +11,11 @@ export default defineConfig({
     react(),
     electron([
       {
-        entry: "electron/main.ts",
+        entry: "./electron/main.ts",
         vite: { build: { outDir: "dist-electron" } },
       },
       {
-        entry: "electron/preload.ts",
+        entry: "./electron/preload.ts",
         onstart(options) {
           options.reload();
         },

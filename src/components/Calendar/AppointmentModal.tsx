@@ -18,12 +18,10 @@ import {
   EventClickArg,
   EventDropArg,
 } from "@fullcalendar/core/index.js";
-import ActionButtons from "@/components/UI/ActionsButtons";
 import {
   X,
   User,
   Calendar,
-  Clock,
   FileText,
   DollarSign,
   AlertCircle,
@@ -67,7 +65,7 @@ export default function AppointmentModal({
 }: Props) {
   const [isCanceled, setIsCanceled] = useState(false);
 
-  const { data, error, loading: loadingPatients } = useQuery(FETCH_PATIENTS, {
+  const { data, loading: loadingPatients } = useQuery(FETCH_PATIENTS, {
     fetchPolicy: "network-only",
   });
   const [call, { loading }] = useMutation(CREATE_APPOINTMENT);
@@ -94,7 +92,6 @@ export default function AppointmentModal({
   });
 
   const {
-    control,
     register,
     setValue,
     handleSubmit,

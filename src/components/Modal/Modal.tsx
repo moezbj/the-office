@@ -12,8 +12,7 @@ export default function Modal({
   isOpen,
   onClose,
   title,
-  children,
-  className,
+  children
 }: ModalProps) {
   if (!isOpen) return null;
 
