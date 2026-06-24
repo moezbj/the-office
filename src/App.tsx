@@ -36,23 +36,32 @@ const AppRoutes = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleNavigate = (deeplinkingUrl: string) => {
+    const handleNavigate = (...args: any[]) => {
+      const flatArgs = args.flat(Infinity);
+      const deeplinkingUrl = flatArgs.find((arg) => typeof arg === "string");
+
       if (!deeplinkingUrl) return;
 
-      // 🚨 FIX: Removed [0]. deeplinkingUrl is a string, not an array!
-      const isDev = deeplinkingUrl.startsWith("http://") || deeplinkingUrl.startsWith("https://");
+      let path = "";
 
-      let path;
-      if (isDev) {
-        path = deeplinkingUrl.split("#")[1]; // Extract the part after the #
-      } else {
-        path = deeplinkingUrl.split("#")[1] || deeplinkingUrl; // Extract or fallback to the full path
+      // Scenario A: Dev mode (Vite dev server)
+      if (deeplinkingUrl.startsWith("http://") || deeplinkingUrl.startsWith("https://")) {
+        const hashIndex = deeplinkingUrl.indexOf("#");
+        if (hashIndex !== -1) {
+          path = deeplinkingUrl.substring(hashIndex + 1);
+        }
+      }
+      // Scenario B: Production / Custom Protocol
+      else {
+        let stripped = deeplinkingUrl.replace(/^electron-fiddle:\/\//, "");
+        stripped = stripped.replace(/#/g, "");
+        path = stripped;
       }
 
       if (path) {
-        console.log("Deep link path:", path);
-        // Ensure the path starts with a slash before navigating
         const finalPath = path.startsWith("/") ? path : `/${path}`;
+      
+
         navigate(finalPath);
       }
     };
@@ -63,7 +72,7 @@ const AppRoutes = () => {
 
     return () => {
       if ((window as any).ipcRenderer) {
-        (window as any).ipcRenderer.receive("navigate", () => {});
+        (window as any).ipcRenderer.receive("navigate", () => { });
       }
     };
   }, [navigate]);
@@ -73,10 +82,10 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/forgetPassword" element={<ForgotPassword />} />
-        
+
         {/* 🚨 Added dynamic route to match the link in your email: /reset-password/:userId/:token */}
         <Route path="/reset-password/:userId/:token" element={<ResetPassword />} />
-        <Route path="/resetPassword" element={<ResetPassword />} /> 
+        <Route path="/resetPassword" element={<ResetPassword />} />
 
         <Route
           path="/"

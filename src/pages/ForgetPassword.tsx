@@ -169,7 +169,7 @@ export default function ForgotPassword() {
 
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || loading}
                   className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-400 disabled:to-indigo-400 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 disabled:shadow-none flex items-center justify-center gap-2"
                 >
                   {isLoading ? (

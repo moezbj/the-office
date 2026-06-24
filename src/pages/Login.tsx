@@ -91,7 +91,7 @@ export default function Login() {
     },
   });
 
-  const [RegisterCall, { loading: isRegisterLoading, error: registerError }] = useAuth({
+  const [RegisterCall, { loading: isRegisterLoading }] = useAuth({
     mutation: signup,
     options: {
       onCompleted: () => {

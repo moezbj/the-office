@@ -1,11 +1,11 @@
-import { app, BrowserWindow,shell } from "electron";
+import { app, BrowserWindow, shell } from "electron";
 import path from "path";
 
 const isDev = !app.isPackaged;
 
 let mainWindow: BrowserWindow | null = null;
 let VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
- const indexPath = path.join(app.getAppPath(), "dist/index.html");
+const indexPath = path.join(app.getAppPath(), "dist/index.html");
 if (process.platform === "win32") app.setAppUserModelId(app.getName());
 
 if (!app.requestSingleInstanceLock()) {
@@ -28,7 +28,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     // IMPORTANT FIX
-   
+
     mainWindow.maximize();
     mainWindow.loadFile(indexPath);
   }
@@ -38,6 +38,13 @@ function createWindow() {
     if (url.startsWith("https:")) shell.openExternal(url);
     return { action: "deny" };
   });
+   const initialDeepLink = process.argv.find((arg) => arg.startsWith("electron-fiddle://"));
+  if (initialDeepLink) {
+    // Wait for the React app to finish loading before sending the IPC message
+    mainWindow?.webContents.once("did-finish-load", () => {
+      mainWindow?.webContents.send("navigate", initialDeepLink);
+    });
+  }
 
   app.on("open-url", function (event, url) {
     event.preventDefault();
@@ -53,14 +60,14 @@ function createWindow() {
         .loadURL(
           VITE_DEV_SERVER_URL
             ? VITE_DEV_SERVER_URL + deepLinkingUrl
-            : `file://${path.join(indexPath, "index.html")}#/${deepLinkingUrl}` // Update this line
+            : `file://${indexPath}#/${deepLinkingUrl}` // Update this line
         )
         .then(() => {
           mainWindow?.webContents.send(
             "navigate",
             VITE_DEV_SERVER_URL
               ? deepLinkingUrl
-              : `file://${path.join(indexPath, "index.html")}#/${deepLinkingUrl}` // Update this line
+              : `file://${indexPath}#/${deepLinkingUrl}` // Update this line
           );
         })
         .catch((err) => console.error("Error loading URL: ", err));
@@ -69,12 +76,12 @@ function createWindow() {
         createWindow();
         mainWindow
           ?.loadURL(
-            `file://${path.join(indexPath, "index.html")}#/${deepLinkingUrl}`
+            `file://${indexPath}#/${deepLinkingUrl}`
           ) // Update this line
           .then(() => {
             mainWindow?.webContents.send(
               "navigate",
-              `file://${path.join(indexPath, "index.html")}#/${deepLinkingUrl}`
+              `file://${indexPath}#/${deepLinkingUrl}`
             );
           })
           .catch((err) => console.error("Error loading URL: ", err));
@@ -90,25 +97,19 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on("second-instance", (_, argv) => {
- 
-    app.on("second-instance", (_, argv) => {
-      if (mainWindow) {
-        // Depending on the platform, argv[argv.length - 1] may contain the deep link
-        let deepLink = argv.find((arg) => arg.startsWith("electron-fiddle://"));
 
-        if (deepLink) {
-          const deepLinkingUrl = deepLink.split("electron-fiddle://")[1];
 
-          mainWindow.webContents.send("navigate", deepLinkingUrl);
-          mainWindow.loadURL(
-            VITE_DEV_SERVER_URL
-              ? VITE_DEV_SERVER_URL + deepLinkingUrl
-              : `file://${path.join(indexPath, "index.html")}#/${deepLinkingUrl}`
-          );
-          mainWindow.focus();
-        }
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+
+      let deepLink = argv.find((arg) => arg.startsWith("electron-fiddle://"));
+
+      if (deepLink) {
+        // Send the FULL URL to the renderer. The new App.tsx logic will parse it safely.
+        mainWindow.webContents.send("navigate", deepLink);
       }
-    });
+    }
   });
 }
 app.on("activate", () => {

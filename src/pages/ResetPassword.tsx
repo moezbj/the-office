@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { useEffect, useState } from "react";
 import {
@@ -15,20 +15,14 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useLazyQuery, useMutation } from "@apollo/client/react";
-import { useAuthStore } from "@/store/authStore";
 import { resetPassword, validToken } from "@/services/auth.service";
 import toast from "react-hot-toast";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const { token, id } = useParams<{ token: string; id: string }>(); // Get token from URL
-  const [showPassword, setShowPassword] = useState(false);
+  const { userId, token } = useParams<{ userId: string; token: string }>(); const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const userd = useAuthStore((state) => state.user);
-
   const formSchema = z
     .object({
       password: z.string().min(6, { message: "Au moins 6 caractères" }),
@@ -40,18 +34,19 @@ export default function ResetPassword() {
     });
   const [resetCall, { loading }] = useMutation(resetPassword);
 
-  const [callValidationToken, { data, error: errorValidation }] = useLazyQuery(validToken)
+  const [callValidationToken, { data }] = useLazyQuery(validToken)
   useEffect(() => {
-    if (id && token) {
+
+    if (userId && token) {
       callValidationToken({
         variables: {
           tokenType: "FORGET",
-          userId: id,
+          userId: userId,
           token: token,
         },
       });
     }
-  }, [callValidationToken, id, token]);
+  }, [callValidationToken, userId, token]);
 
 
   const {
@@ -62,7 +57,6 @@ export default function ResetPassword() {
     resolver: zodResolver(formSchema),
     defaultValues: { password: "", confirm: "" },
   });
-
   const onSubmit = (variables: { confirm: string; password: string }): void => {
     if (!data) setError("Token invalide");
     resetCall({
@@ -76,9 +70,7 @@ export default function ResetPassword() {
       },
     });
   };
-  if (userd) {
-    return <Navigate to={params.get("from") || "/"} replace />;
-  }
+
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Branding (Identical to Login) */}
@@ -222,10 +214,10 @@ export default function ResetPassword() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-400 disabled:to-indigo-400 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 disabled:shadow-none flex items-center justify-center gap-2"
             >
-              {isLoading ? (
+              {loading ? (
                 <><Loader2 className="w-5 h-5 animate-spin" />Réinitialisation...</>
               ) : (
                 "Réinitialiser le mot de passe"
