@@ -91,15 +91,30 @@ const defaultGraphQlUrl = (() => {
   return "http://localhost:3000/graphql";
 })();
 
-const apiUrlFallback = sanitizeEnvUrl(import.meta.env?.VITE_API_URL);
-const apiUrlLooksLikeGraphQl =
-  typeof apiUrlFallback === "string" && /\/graphql\/?$/.test(apiUrlFallback);
+const resolveGraphQlUrl = (): string => {
+  const explicitGraphQl =
+    sanitizeEnvUrl(import.meta.env?.VITE_GRAPHQL_URL) ||
+    sanitizeEnvUrl(import.meta.env?.VITE_GRAPHQL_URI);
 
-const graphQlUrl =
-  sanitizeEnvUrl(import.meta.env?.VITE_GRAPHQL_URL) ||
-  sanitizeEnvUrl(import.meta.env?.VITE_GRAPHQL_URI) ||
-  (apiUrlLooksLikeGraphQl ? apiUrlFallback : undefined) ||
-  defaultGraphQlUrl;
+  if (explicitGraphQl) {
+    return explicitGraphQl;
+  }
+
+  const envApiUrl =
+    sanitizeEnvUrl(import.meta.env?.VITE_API_BASE_URL) ||
+    sanitizeEnvUrl(import.meta.env?.VITE_API_URL);
+
+  if (envApiUrl) {
+    if (/\/graphql\/?$/i.test(envApiUrl)) {
+      return envApiUrl;
+    }
+    return `${envApiUrl.replace(/\/+$/, "")}/graphql`;
+  }
+
+  return defaultGraphQlUrl;
+};
+
+const graphQlUrl = resolveGraphQlUrl();
 
 const httpLink = new HttpLink({
   uri: graphQlUrl,

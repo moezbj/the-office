@@ -25,14 +25,14 @@ import {
   AlertCircle,
 } from "lucide-react";
 import "./styles/styles.css";
+import FeeModal from "@/components/Modal/InfoModal";
+import { format } from "date-fns";
 
 export default function CalendarPage() {
   const user = useAuthStore((state) => state.user);
 
-  // 1. Create a ref to access the FullCalendar API
   const calendarRef = useRef<any>(null);
 
-  // 2. State to hold the dynamic calendar title (e.g., "June 2026")
   const [currentTitle, setCurrentTitle] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,6 +40,8 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<EventClickArg | null>(
     null,
   );
+  const [selectedDateInfo, setSelectedDateInfo] = useState<Date | null>(null);
+  const [openInfo, setOpenInfo] = useState<boolean>(false);
   const [selectedDropEvent, setSelectedDropEvent] =
     useState<EventDropArg | null>(null);
   const [currentView, setCurrentView] = useState("timeGridWeek");
@@ -108,6 +110,7 @@ export default function CalendarPage() {
   }, []);
 
   const handleEventSelect = (selectInfo: EventClickArg) => {
+    console.log('selectInfo', selectInfo)
     setSelectedEvent(selectInfo);
     setIsModalOpen(true);
   };
@@ -116,7 +119,6 @@ export default function CalendarPage() {
     setSelectedDropEvent(dropInfo);
   };
 
-  // 3. FIXED Navigation Functions using the Ref
   const handleToday = () => {
     const calendarApi = calendarRef.current?.getApi();
     if (calendarApi) calendarApi.today();
@@ -136,6 +138,11 @@ export default function CalendarPage() {
     setCurrentView(view);
     const calendarApi = calendarRef.current?.getApi();
     if (calendarApi) calendarApi.changeView(view);
+  };
+  const handleDateNameSelect = (info: Date) => {
+    console.log('info', info)
+    setSelectedDateInfo(info);
+    setOpenInfo(true);
   };
 
   useEffect(() => {
@@ -243,11 +250,10 @@ export default function CalendarPage() {
                   <button
                     key={view}
                     onClick={() => changeView(view)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      currentView === view
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-slate-600 hover:text-slate-800"
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${currentView === view
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-slate-600 hover:text-slate-800"
+                      }`}
                   >
                     {view === "dayGridMonth"
                       ? "Mois"
@@ -278,6 +284,7 @@ export default function CalendarPage() {
                 editable={true}
                 weekends={true}
                 nowIndicator={true}
+                navLinks={true}
                 firstDay={1}
                 hiddenDays={[0]}
                 select={handleDateSelect}
@@ -292,10 +299,10 @@ export default function CalendarPage() {
                 slotDuration={slotTime}
                 eventContent={renderEventContent}
                 allDaySlot={true}
-                // 6. Update the title state whenever the calendar view changes
                 datesSet={(dateInfo) => {
                   setCurrentTitle(dateInfo.view.title);
                 }}
+                navLinkDayClick={handleDateNameSelect}
                 slotLabelFormat={{
                   hour: "2-digit",
                   minute: "2-digit",
@@ -323,6 +330,18 @@ export default function CalendarPage() {
         setSelectedDate={setSelectedDate}
         setSelectedDropEvent={setSelectedDropEvent}
       />
+      {selectedDateInfo && (
+        <FeeModal
+          title={selectedDateInfo ? format(selectedDateInfo, "MM-dd-yyyy") : ""}
+          description="Total"
+          handleClose={() => setOpenInfo(false)}
+          open={openInfo}
+          buttonCancel="Annuler"
+          buttonTitle="Ajouter"
+          date={selectedDateInfo}
+          refetch={refetch}
+        />
+      )}
     </div>
   );
 }

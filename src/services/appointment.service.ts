@@ -123,8 +123,26 @@ export const FETCH_TOTAL = gql`
   query totalGain($date: String) {
     totalGain(date: $date)
   }
-`;
-export const FETCH_TOTAL_DETAILED = gql`
+` as TypedDocumentNode<{ totalGain: number }>;
+
+export interface TotalGainDetailedResponse {
+  totalGainDetailed: {
+    appointments: {
+      price: number;
+      startTime: string;
+    }[];
+    fees: {
+      amount: number;
+      note?: string;
+      date: string;
+    }[];
+  };
+}
+
+export const FETCH_TOTAL_DETAILED: TypedDocumentNode<
+  TotalGainDetailedResponse,
+  { startTime?: string; endTime?: string }
+> = gql`
   query totalGainDetailed($startTime: String, $endTime: String) {
     totalGainDetailed(startTime: $startTime, endTime: $endTime) {
       appointments {
@@ -139,3 +157,4 @@ export const FETCH_TOTAL_DETAILED = gql`
     }
   }
 `;
+

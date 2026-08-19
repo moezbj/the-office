@@ -11,6 +11,7 @@ import {
 import Modal from "../Modal/Modal";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client/react";
+import { format } from "date-fns";
 import { FETCH_PATIENTS } from "@/services/patient.service";
 import { Patient } from "@/types";
 import {
@@ -43,6 +44,13 @@ interface Props {
   setSelectedEvent: (value: null) => void;
   setSelectedDropEvent: (value: null) => void;
 }
+
+const createIsoDateTime = (baseDate: Date, timeStr: string): string => {
+  const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+  const date = new Date(baseDate);
+  date.setHours(hours || 0, minutes || 0, seconds || 0, 0);
+  return date.toISOString();
+};
 
 const formSchema = z.object({
   startTime: z.string().min(2).max(50),
@@ -120,8 +128,8 @@ export default function AppointmentModal({
       };
       if (selectedDate) {
         const inputs = {
-          startTime: `${selectedDate.start.toISOString().split("T")[0]}T${variables.startTime}.000Z`,
-          endTime: `${selectedDate.end.toISOString().split("T")[0]}T${variables.endTime}.000Z`,
+          startTime: createIsoDateTime(selectedDate.start, variables.startTime),
+          endTime: createIsoDateTime(selectedDate.end, variables.endTime),
         };
         call({
           variables: { input: { ...inputs, ...GlobalInputs } },
@@ -136,9 +144,12 @@ export default function AppointmentModal({
       }
 
       if (info) {
+        const baseStart = info.event.start || new Date(info.event.startStr);
+        const baseEnd =
+          info.event.end || (info.event.endStr ? new Date(info.event.endStr) : baseStart);
         const inputs = {
-          startTime: `${info.event.startStr.split("T")[0]}T${variables.startTime}.000Z`,
-          endTime: `${info.event.endStr.split("T")[0]}T${variables.endTime}.000Z`,
+          startTime: createIsoDateTime(baseStart, variables.startTime),
+          endTime: createIsoDateTime(baseEnd, variables.endTime),
         };
         callUpdate({
           variables: {
@@ -172,18 +183,27 @@ export default function AppointmentModal({
 
   useEffect(() => {
     if (selectedDate) {
-      setValue("startTime", selectedDate.start.toISOString().split("T")[1].split(".")[0]);
-      setValue("endTime", selectedDate.end.toISOString().split("T")[1].split(".")[0]);
+      setValue("startTime", format(selectedDate.start, "HH:mm"));
+      setValue("endTime", format(selectedDate.end, "HH:mm"));
     }
   }, [selectedDate]);
 
   useEffect(() => {
     if (info) {
-      setValue("startTime", info.event.startStr.split("T")[1].replace("Z", ""));
-      setValue("endTime", info.event.endStr.split("T")[1].replace("Z", ""));
-      setValue("note", info.event.extendedProps.note);
-      setValue("patient", info.event.extendedProps.patient.id);
-      setValue("price", info.event.extendedProps.price);
+      const start = info.event.start;
+      const end = info.event.end;
+      const startTimeStr = start
+        ? format(start, "HH:mm")
+        : info.event.startStr.split("T")[1]?.split(/[-+Z]/)[0]?.slice(0, 5) || "";
+      const endTimeStr = end
+        ? format(end, "HH:mm")
+        : info.event.endStr.split("T")[1]?.split(/[-+Z]/)[0]?.slice(0, 5) || "";
+
+      setValue("startTime", startTimeStr);
+      setValue("endTime", endTimeStr);
+      setValue("note", info.event.extendedProps.note || "");
+      setValue("patient", info.event.extendedProps.patient?.id || "");
+      setValue("price", info.event.extendedProps.price ?? 0);
       setIsCanceled(info.event.extendedProps.status === "CANCELED");
     }
   }, [info?.event]);
@@ -285,8 +305,12 @@ export default function AppointmentModal({
                   type="date"
                   value={
                     info
-                      ? info.event.startStr.split("T")[0]
-                      : selectedDate?.start.toISOString().split("T")[0]
+                      ? info.event.start
+                        ? format(info.event.start, "yyyy-MM-dd")
+                        : info.event.startStr.split("T")[0]
+                      : selectedDate?.start
+                      ? format(selectedDate.start, "yyyy-MM-dd")
+                      : ""
                   }
                   readOnly
                   className="w-full px-3 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-slate-600 cursor-not-allowed"

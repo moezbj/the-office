@@ -22,7 +22,7 @@ export default function Sidebar() {
     {
       to: "/",
       icon: Calendar,
-      label: "Calendar",
+      label: "Calendrier",
       description: "Appointments",
     },
     {
@@ -34,9 +34,16 @@ export default function Sidebar() {
     {
       to: "/bills",
       icon: Receipt,
-      label: "Bills",
+      label: "Factures",
       description: "Invoices & payments",
     },
+    {
+      to: "/total",
+      icon: Receipt,
+      label: "Totaux",
+      description: "Totals",
+    },
+
     {
       to: "/note",
       icon: FileText,
@@ -46,17 +53,15 @@ export default function Sidebar() {
   ];
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-      isActive
-        ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-600/30"
-        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+    `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
+      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-600/30"
+      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
     } ${isCollapsed ? "justify-center" : ""}`;
 
   return (
     <aside
-      className={`${
-        isCollapsed ? "w-20" : "w-72"
-      } bg-white border-r border-slate-200 flex flex-col h-full transition-all duration-300 ease-in-out shadow-xl`}
+      className={`${isCollapsed ? "w-20" : "w-72"
+        } bg-white border-r border-slate-200 flex flex-col h-full transition-all duration-300 ease-in-out shadow-xl`}
     >
       {/* Header */}
       <div className="p-6 border-b border-slate-100">
@@ -76,9 +81,8 @@ export default function Sidebar() {
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className={`p-2 rounded-lg hover:bg-slate-100 transition-colors ${
-              isCollapsed ? "mx-auto" : ""
-            }`}
+            className={`p-2 rounded-lg hover:bg-slate-100 transition-colors ${isCollapsed ? "mx-auto" : ""
+              }`}
           >
             {isCollapsed ? (
               <ChevronRight className="w-5 h-5 text-slate-600" />
@@ -112,9 +116,8 @@ export default function Sidebar() {
         {navItems.map((item) => (
           <NavLink key={item.to} to={item.to} className={navClass}>
             <item.icon
-              className={`w-5 h-5 flex-shrink-0 ${
-                isCollapsed ? "" : "transition-transform group-hover:scale-110"
-              }`}
+              className={`w-5 h-5 flex-shrink-0 ${isCollapsed ? "" : "transition-transform group-hover:scale-110"
+                }`}
             />
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
@@ -134,26 +137,24 @@ export default function Sidebar() {
           <NavLink
             to="/settings"
             className={({ isActive }) =>
-              `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                isActive
-                  ? "bg-gradient-to-r from-slate-700 to-slate-800 text-white shadow-lg"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
+                ? "bg-gradient-to-r from-slate-700 to-slate-800 text-white shadow-lg"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`
             }
           >
             <Settings className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">Settings</span>
+            <span className="font-medium">Paramètres</span>
           </NavLink>
         )}
 
         <button
           onClick={logout}
-          className={`group w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-red-600 hover:bg-red-50 hover:text-red-700 ${
-            isCollapsed ? "justify-center" : ""
-          }`}
+          className={`group w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-red-600 hover:bg-red-50 hover:text-red-700 ${isCollapsed ? "justify-center" : ""
+            }`}
         >
           <LogOut className="w-5 h-5 flex-shrink-0 transition-transform group-hover:-translate-x-1" />
-          {!isCollapsed && <span className="font-medium">Logout</span>}
+          {!isCollapsed && <span className="font-medium">Déconnexion</span>}
         </button>
       </div>
 

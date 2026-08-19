@@ -6,6 +6,7 @@ import CalendarPage from "./pages/CalendarPage";
 import PatientsPage from "./pages/PatientsPage";
 import NotePage from "./pages/Note";
 import BillsPage from "./pages/BillsPage";
+import Totals from "./pages/Totals";
 import { ErrorBoundary } from "./components/UI/ErrorBoundary";
 import AuthProvider from "./providers/AuthProvider";
 import SettingsPage from "./pages/Settings";
@@ -60,7 +61,7 @@ const AppRoutes = () => {
 
       if (path) {
         const finalPath = path.startsWith("/") ? path : `/${path}`;
-      
+
 
         navigate(finalPath);
       }
@@ -108,6 +109,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <BillsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/total"
+          element={
+            <ProtectedRoute>
+              <Totals />
             </ProtectedRoute>
           }
         />
